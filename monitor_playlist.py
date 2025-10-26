@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from auth_setup import get_spotify_manager
 from discord_notifier import send_discord_notification
 
@@ -9,8 +10,8 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-PLAYLIST_URL = 'https://open.spotify.com/playlist/30k2noaMn8Uq9OYoY4esfI?si=720d843579744389'
-LAST_TRACK_FILE = 'last_playlist_track.txt'
+PLAYLIST_URL = 'https://open.spotify.com/playlist/30k2noaMn8Uq9OYoY4esfI?si=dec8e41d1e764543'
+LAST_CHECK_FILE = 'last_check_timestamp.txt'
 
 
 def extract_playlist_id(playlist_url):
@@ -21,29 +22,29 @@ def extract_playlist_id(playlist_url):
     return playlist_url
 
 
-def load_last_track_id():
-    """Load the last tracked track ID from file."""
+def load_last_check_timestamp():
+    """Load the last check timestamp from file."""
     try:
-        with open(LAST_TRACK_FILE, 'r') as f:
-            track_id = f.read().strip()
-            log.info(f"📝 Loaded last track ID: {track_id[:20]}...")
-            return track_id
+        with open(LAST_CHECK_FILE, 'r') as f:
+            timestamp = f.read().strip()
+            log.info(f"📝 Last check timestamp: {timestamp}")
+            return timestamp
     except FileNotFoundError:
-        log.info(f"📝 {LAST_TRACK_FILE} not found (first run)")
+        log.info(f"📝 {LAST_CHECK_FILE} not found (first run)")
         return None
 
 
-def save_last_track_id(track_id):
-    """Save the last track ID to file."""
-    with open(LAST_TRACK_FILE, 'w') as f:
-        f.write(track_id)
-    log.info(f"💾 Saved last track ID: {track_id[:20]}...")
+def save_check_timestamp(timestamp):
+    """Save the current check timestamp to file."""
+    with open(LAST_CHECK_FILE, 'w') as f:
+        f.write(timestamp)
+    log.info(f"💾 Saved check timestamp: {timestamp}")
 
 
 def get_playlist_tracks(sp, playlist_id):
     """
-    Get all tracks from a playlist in order (newest first).
-    Returns list of track dictionaries.
+    Get all tracks from a playlist with their added_at timestamps.
+    Returns list of track dictionaries sorted by added_at (newest first).
     """
     tracks = []
     results = sp.playlist_tracks(playlist_id, limit=100)
@@ -65,13 +66,15 @@ def get_playlist_tracks(sp, playlist_id):
         else:
             break
     
+    tracks.sort(key=lambda x: x['added_at'], reverse=True)
+    
     return tracks
 
 
 def monitor_playlist():
     """
-    Monitor a playlist for new tracks.
-    Checks if new tracks were added since last run and sends Discord notification.
+    Monitor a playlist for new tracks based on added_at timestamp.
+    Detects tracks added anywhere in the playlist since last check.
     """
     log.info("🎵 Starting playlist monitor...")
     
@@ -81,7 +84,7 @@ def monitor_playlist():
     spotify_manager = get_spotify_manager()
     sp = spotify_manager.get_client()
     
-    last_tracked_id = load_last_track_id()
+    last_check = load_last_check_timestamp()
     
     log.info("🔍 Fetching current playlist tracks...")
     all_tracks = get_playlist_tracks(sp, playlist_id)
@@ -90,34 +93,28 @@ def monitor_playlist():
         log.warning("⚠️ Playlist is empty or couldn't fetch tracks")
         return
     
-    current_first_track_id = all_tracks[0]['id']
-    log.info(f"🎵 Current first track: {all_tracks[0]['name']} by {all_tracks[0]['artists']}")
+    current_time = datetime.now(timezone.utc).isoformat()
     
-    if last_tracked_id is None:
-        log.info("🆕 First run - saving current first track as baseline")
-        save_last_track_id(current_first_track_id)
+    if last_check is None:
+        log.info("🆕 First run - establishing baseline")
+        log.info(f"📊 Playlist currently has {len(all_tracks)} tracks")
+        save_check_timestamp(current_time)
         log.info("✅ Baseline set. Future runs will detect new additions.")
         return
     
-    if current_first_track_id == last_tracked_id:
-        log.info("✨ No new tracks added since last check")
-        return
-    
-    log.info("🎉 New tracks detected! Finding all new additions...")
+    log.info(f"🔍 Looking for tracks added after: {last_check}")
     new_tracks = []
     
     for track in all_tracks:
-        if track['id'] == last_tracked_id:
-            log.info(f"🛑 Found last tracked track: {track['name']}")
-            break
-        new_tracks.append(track)
+        if track['added_at'] > last_check:
+            new_tracks.append(track)
+            log.info(f"   🎵 {track['name']} - {track['artists']} (added: {track['added_at']})")
     
     if new_tracks:
         log.info(f"📊 Found {len(new_tracks)} new track(s)")
         
         tracks_info = []
         for track in new_tracks:
-            log.info(f"   🎵 {track['name']} - {track['artists']}")
             tracks_info.append({
                 'name': track['name'],
                 'artists': track['artists'],
@@ -126,11 +123,10 @@ def monitor_playlist():
                 'days_old': 0
             })
         
-        save_last_track_id(current_first_track_id)
+        save_check_timestamp(current_time)
         
         send_discord_notification(tracks_info)
         log.info("✅ Playlist monitoring complete!")
     else:
-        log.warning("⚠️ Couldn't find last tracked track in playlist (it may have been removed)")
-        log.info("🔄 Updating baseline to current first track")
-        save_last_track_id(current_first_track_id)
+        log.info("✨ No new tracks added since last check")
+        save_check_timestamp(current_time)
