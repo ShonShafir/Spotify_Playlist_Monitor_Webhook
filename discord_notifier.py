@@ -112,7 +112,7 @@ def send_simple_notification(message):
     
     try:
         payload = {
-            "username": "Spotify Bot",
+            "username": "Spotify Upfront UK Hardcore Release Radar",
             "content": message
         }
         
