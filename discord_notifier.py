@@ -73,7 +73,7 @@ def send_discord_notification(tracks_info):
             })
         
         payload = {
-            "username": "Spotify Bot",
+            "username": "Spotify Upfront UK Hardcore Release Radar",
             "embeds": [embed]
         }
         
