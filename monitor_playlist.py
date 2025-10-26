@@ -9,7 +9,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-PLAYLIST_URL = 'https://open.spotify.com/playlist/47dNMRY60zT6RdqsIxjhLa'
+PLAYLIST_URL = 'https://open.spotify.com/playlist/30k2noaMn8Uq9OYoY4esfI?si=720d843579744389'
 LAST_TRACK_FILE = 'last_playlist_track.txt'
 
 
