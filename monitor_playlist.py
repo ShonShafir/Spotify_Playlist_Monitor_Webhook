@@ -54,7 +54,7 @@ def get_playlist_tracks(sp, playlist_id):
             if item['track'] and item['track']['id']:
                 track = item['track']
                 tracks.append({
-                    'image_url': track['album']['images'][0]['url'] if track['album']['images'] else None
+                    'image_url': track['album']['images'][0]['url'] if track['album']['images'] else None,
                     'id': track['id'],
                     'name': track['name'],
                     'artists': ', '.join(a['name'] for a in track['artists']),
