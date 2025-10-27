@@ -122,6 +122,7 @@ def monitor_playlist():
                 'release_date': track['added_at'].split('T')[0] if 'T' in track['added_at'] else track['added_at'],
                 'uri': track['uri'],
                 'days_old': 0
+                'image_url': track.get('image_url')
             })
         
         save_check_timestamp(current_time)
