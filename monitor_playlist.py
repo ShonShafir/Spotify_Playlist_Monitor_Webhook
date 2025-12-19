@@ -59,7 +59,8 @@ def get_playlist_tracks(sp, playlist_id):
                     'name': track['name'],
                     'artists': ', '.join(a['name'] for a in track['artists']),
                     'uri': track['uri'],
-                    'added_at': item['added_at']
+                    'added_at': item['added_at'],
+                    'release_date': track['album']['release_date']
                 })
         
         if results['next']:
@@ -119,7 +120,7 @@ def monitor_playlist():
             tracks_info.append({
                 'name': track['name'],
                 'artists': track['artists'],
-                'release_date': track['added_at'].split('T')[0] if 'T' in track['added_at'] else track['added_at'],
+                'release_date': track['release_date'],
                 'uri': track['uri'],
                 'days_old': 0,
                 'image_url': track.get('image_url')
