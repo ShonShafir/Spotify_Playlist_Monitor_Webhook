@@ -128,7 +128,7 @@ def monitor_playlist():
         
         save_check_timestamp(current_time)
         
-        send_discord_notification(tracks_info)
+        #send_discord_notification(tracks_info)
         log.info("✅ Playlist monitoring complete!")
     else:
         log.info("✨ No new tracks added since last check")
