@@ -21,7 +21,7 @@ class SpotifyClientManager:
             client_id=self.client_id,
             client_secret=self.client_secret,
             redirect_uri="http://127.0.0.1:8888/callback",
-            scope="playlist-modify-public playlist-modify-private user-library-read",
+            scope="playlist-modify-public playlist-modify-private user-library-read playlist-read-collaborative",
             cache_path=".spotify_cache",
             show_dialog=False
         )
