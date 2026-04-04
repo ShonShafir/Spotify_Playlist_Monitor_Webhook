@@ -48,6 +48,7 @@ def get_playlist_tracks(sp, playlist_id):
     """
     tracks = []
     results = sp.playlist_tracks(playlist_id, limit=100)
+    log.info(f"{results}")
     
     while results:
         for item in results['items']:
