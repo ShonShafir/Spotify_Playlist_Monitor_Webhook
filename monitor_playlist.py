@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-PLAYLIST_URL = 'https://open.spotify.com/playlist/1pUn4oZHGCydju7HWIkhBf?si=9b82e464bad046ef'
+PLAYLIST_URL = 'https://open.spotify.com/playlist/1pUn4oZHGCydju7HWIkhBf?si=b34e4911fb0b4c4a'
 LAST_CHECK_FILE = 'last_check_timestamp.txt'
 
 
