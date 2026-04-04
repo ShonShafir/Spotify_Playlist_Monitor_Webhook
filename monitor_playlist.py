@@ -50,18 +50,29 @@ def get_playlist_tracks(sp, playlist_id):
     results = sp.playlist_tracks(playlist_id, limit=100)
     log.info(f"{results}")
     
+def get_playlist_tracks(sp, playlist_id):
+    """
+    Get all tracks from a playlist with their added_at timestamps.
+    Returns list of track dictionaries sorted by added_at (newest first).
+    """
+    tracks = []
+    results = sp.playlist_tracks(playlist_id, limit=100)
+    log.info(f"{results}")
+    
     while results:
         for item in results['items']:
-            if item['track'] and item['track']['id']:
-                track = item['track']
+            # Safely grab the data whether Spotify calls it 'item' or 'track'
+            track_data = item.get('item') or item.get('track')
+            
+            if track_data and track_data.get('id'):
                 tracks.append({
-                    'image_url': track['album']['images'][0]['url'] if track['album']['images'] else None,
-                    'id': track['id'],
-                    'name': track['name'],
-                    'artists': ', '.join(a['name'] for a in track['artists']),
-                    'uri': track['uri'],
-                    'added_at': item['added_at'],
-                    'release_date': track['album']['release_date']
+                    'image_url': track_data['album']['images'][0]['url'] if track_data.get('album', {}).get('images') else None,
+                    'id': track_data['id'],
+                    'name': track_data.get('name', 'Unknown Track'),
+                    'artists': ', '.join(a.get('name', 'Unknown Artist') for a in track_data.get('artists', [])),
+                    'uri': track_data.get('uri'),
+                    'added_at': item.get('added_at'),
+                    'release_date': track_data.get('album', {}).get('release_date')
                 })
         
         if results['next']:
